@@ -12,7 +12,7 @@ from routes.globalSearch import globalSearch_bp
 from routes.spam import getSpam_bp, markSpam_bp
 load_dotenv()
 FRONTEND_URL = os.getenv('VITE_FRONTEND_URL')
-print(f'FRONTEND_URL: {FRONTEND_URL}')
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": {FRONTEND_URL}}}, supports_credentials=True)
 
@@ -31,6 +31,9 @@ app.register_blueprint(markSpam_bp)
 app.register_blueprint(getSpam_bp)
 app.register_blueprint(globalSearch_bp)
 
+@app.route('/')
+def home():
+    return "Hello from Guardial on Vercel!"
 
 @app.route('/check-auth', methods=['GET'])
 @verify_token
