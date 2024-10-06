@@ -1,0 +1,23 @@
+.env
+venv/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+*.log
+*.sqlite3
+instance/
+
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,5 +1,113 @@
+body { 
+  background: #222; 
+}
+
+#content { 
+  background: white; 
+  min-height: 400px; 
+}
+
 .righteous-regular {
   font-family: "Righteous", sans-serif;
   font-weight: 400;
   font-style: normal;
+}
+
+.tabs { 
+  list-style: none; 
+  margin: 60px auto 0; 
+  padding: 0; 
+  display: flex; 
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 90%;
+  max-width: 660px; 
+}
+
+.tabs li { 
+  position: relative; 
+  margin: 0 5px; 
+}
+
+.tabs a { 
+  display: inline-block; 
+  padding: 10px 20px;
+  text-decoration: none;
+  color: black;
+  background: #B7B5F3; 
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+
+.tabs .active {
+  z-index: 3;
+}
+
+.tabs .active a { 
+  background: white; 
+  color: #4F46E5; 
+  font-weight: bold; 
+}
+
+.tabs li:before, .tabs li:after, 
+.tabs li a:before, .tabs li a:after {
+  position: absolute;
+  bottom: 0;
+}
+
+.tabs li:last-child:after, .tabs li:last-child a:after,
+.tabs li:first-child:before, .tabs li:first-child a:before,
+.tabs .active:after, .tabs .active:before, 
+.tabs .active a:after, .tabs .active a:before {
+  content: "";
+}
+
+.tabs .active:before, .tabs .active:after {
+  background: white; 
+  z-index: 1;
+}
+
+.tabs li:before, .tabs li:after {
+  background: #B7B5F3;
+  width: 10px;
+  height: 10px;
+}
+
+.tabs li:before {
+  left: -10px;      
+}
+
+.tabs li:after { 
+  right: -10px;
+}
+
+.tabs li a:after, .tabs li a:before {
+  width: 20px; 
+  height: 20px;
+  border-radius: 10px;
+  background: #B7B5F3;
+  z-index: 2;
+}
+
+.tabs .active a:after, .tabs .active a:before {
+  background: #B7B5F3;
+}
+
+.tabs li:first-child.active a:before,
+.tabs li:last-child.active a:after {
+  background: #B7B5F3;
+}
+
+.tabs li a:before {
+  left: -20px;
+}
+
+.tabs li a:after {
+  right: -20px;
+}
+
+@media (max-width: 768px) {
+  .tabs a {
+    padding: 10px 20px;
+  }
 }

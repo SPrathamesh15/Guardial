@@ -1,53 +1,38 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 import { HiEye, HiEyeOff } from 'react-icons/hi';
 import { toast } from 'react-toastify';
 import axios from '../config/axiosConfig';
 import { useNavigate, NavLink } from 'react-router-dom';
-import { AuthContext } from '../context/authContext';
 import SignupImg from '../assets/images/signupImg.jpg';
-import '../style/style.css'
-function Login({ userData }) {
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-  });
-  const [currentUser, setCurrentUser] = useState(null);
-  const { login } = useContext(AuthContext);
+import '../style/style.css';
+import {AuthContext} from '../context/authContext';
+
+function Login() {
+  const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setCurrentUser(userData);
-  }, [userData]);
-
+  const { currentUser, login } = useContext(AuthContext)
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/login', form, { withCredentials: true });
-      const { user } = response.data;
-      console.log('usersss', user)
-      login(user); 
-      toast.success("Login successful!");
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      const response = await axios.post('/auth/login', form);
+      console.log('response', response.data)
+      toast.success(response.data.message);
+
+      login(response.data.user, response.data.token)
+      navigate('/home');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "An error occurred";
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.error || 'Something went wrong');
     }
   };
 
   return (
     <div className="flex min-h-screen bg-[#FAF9FE]">
-      {/* Left Column - Image */}
       <div className="hidden lg:flex lg:w-1/2 justify-center items-center">
         <img
           src={SignupImg}
@@ -56,10 +41,9 @@ function Login({ userData }) {
         />
       </div>
 
-      {/* Right Column - Form */}
       <div className="flex w-full lg:w-1/2 justify-center items-center bg-white p-10">
         <div className="w-full max-w-md">
-        <h1 className="text-4xl font-extrabold text-center text-[#4D4AC1] mb-8 righteous-regular">Guardial</h1>
+          <h1 className="text-4xl font-extrabold text-center text-[#4D4AC1] mb-8 righteous-regular">Guardial</h1>
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Login to Your Account</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex items-center bg-gray-100 rounded-md p-2">
@@ -100,10 +84,10 @@ function Login({ userData }) {
             </button>
           </form>
           <p className="text-lg text-center text-gray-600 mt-4">
-            <NavLink to="/forgot-password" className="decoration-underline text-[#6E6BDE] hover:text-[#4D4AC1]text-md hover:underline transition-duration-300">Forgot your password?</NavLink>
+            <NavLink to="/forgot-password" className="text-[#6E6BDE] hover:text-[#4D4AC1]">Forgot your password?</NavLink>
           </p>
           <p className="text-center text-gray-600 mt-4">
-            Don't have an account? <a href="/signup" className="text-[#4D4AC1] font-bold hover:underline transition-300">Sign up here</a>
+            Don't have an account? <NavLink to="/signup" className="text-[#4D4AC1] font-bold hover:underline">Sign up here</NavLink>
           </p>
         </div>
       </div>

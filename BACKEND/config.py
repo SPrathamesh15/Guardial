@@ -1,0 +1,16 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+MYSQL_HOST_NAME = os.getenv('MYSQL_HOST_NAME')
+MYSQL_PORT_NAME = os.getenv('MYSQL_PORT_NAME')
+MYSQL_USER_NAME = os.getenv('MYSQL_USER_NAME')
+MYSQL_HOST_PASSWORD = os.getenv('MYSQL_HOST_PASSWORD')
+MYSQL_DB_NAME = os.getenv('MYSQL_DB_NAME')
+
+class Config:
+    MYSQL_HOST = MYSQL_HOST_NAME
+    MYSQL_PORT = MYSQL_PORT_NAME
+    MYSQL_USER = MYSQL_USER_NAME
+    MYSQL_PASSWORD = MYSQL_HOST_PASSWORD 
+    MYSQL_DB = MYSQL_DB_NAME       

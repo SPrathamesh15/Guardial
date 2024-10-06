@@ -1,40 +1,53 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from '../config/axiosConfig'; 
-import { toast } from 'react-toastify';
+
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
+  const setAuthToken = (token) => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const response = await axios.get('/check-auth');
-        setIsLoggedIn(response.data.isAuthenticated);
-        setCurrentUser(response.data.user); 
-      } catch (error) {
-        setIsLoggedIn(false);
-        setCurrentUser(null);
+      const token = localStorage.getItem('token');
+      if (token) {
+        setAuthToken(token);
+        try {
+          const response = await axios.get('/check-auth');
+          setIsLoggedIn(response.data.isAuthenticated);
+          setCurrentUser(response.data.user);
+        } catch (error) {
+          setIsLoggedIn(false);
+          setCurrentUser(null);
+          setAuthToken(null); 
+          localStorage.removeItem('token'); 
+        }
       }
     };
 
     checkAuth();
   }, []);
 
-  const login = (userData) => {
+  const login = (userData, token) => {
+    localStorage.setItem('token', token); 
+    setAuthToken(token); 
     setCurrentUser(userData);
     setIsLoggedIn(true);
   };
 
   const logout = async () => {
-    try {
-      await axios.post('/logout');
-    } catch (error) {
-      toast.error('Logout failed!');
-    }
     setCurrentUser(null);
     setIsLoggedIn(false);
+    localStorage.removeItem('token'); 
+    setAuthToken(null); 
   };
 
   return (

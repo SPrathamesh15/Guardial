@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaKey } from 'react-icons/fa';
-import { HiEye, HiEyeOff } from 'react-icons/hi';
+import { HiEye, HiEyeOff, HiRewind } from 'react-icons/hi';
 import axios from '../config/axiosConfig';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import zxcvbn from 'zxcvbn';
 import SignupImg from '../assets/images/signupImg.jpg';
-import { AuthContext } from '../context/authContext'
-import '../style/style.css'
+import { AuthContext } from '../context/authContext';
+import '../style/style.css';
+
 function Signup() {
   const [form, setForm] = useState({
     fullName: '',
@@ -15,93 +15,92 @@ function Signup() {
     phone: '',
     password: '',
     confirmpassword: '',
-    otp: '',
+    otp: ''
   });
-  const [showOtpInput, setShowOtpInput] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [passwordSuggestions, setPasswordSuggestions] = useState([]);
-  const [timer, setTimer] = useState(120);
-  const [otpResent, setOtpResent] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpResent, setOtpResent] = useState(false);
+  const [timer, setTimer] = useState(30);
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
-
-  useEffect(() => {
-    let interval;
-    if (showOtpInput && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    } else if (timer === 0) {
-      clearInterval(interval);
-    }
-
-    return () => clearInterval(interval);
-  }, [showOtpInput, timer]);
-
-  const handleResendOtp = async () => {
-    setIsSendingOtp(true);
-    try {
-      await axios.post('/resend-otp', { email: form.email });
-      setTimer(120);
-      setOtpResent(true);
-      toast.success('OTP resent to your email.');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to resend OTP.');
-    } finally {
-      setIsSendingOtp(false);
-    }
-  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
     setForm({
       ...form,
-      [name]: value,
+      [e.target.name]: e.target.value
     });
-
-    if (name === 'password') {
-      const result = zxcvbn(value);
-      setPasswordStrength(result.score);
-      setPasswordSuggestions(result.feedback.suggestions);
-    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (form.password !== form.confirmpassword) {
-      toast.error("Passwords do not match.");
+      toast.error('Passwords do not match!');
       return;
     }
-    if (showOtpInput) {
-      try {
-        const response = await axios.post('/verify-otp-and-signup', form);
-        const { user, message } = response.data;
-        
-        login(user);
-        toast.success(message);
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
-      } catch (error) {
-        const errorMessage = error.response?.data?.message;
-        toast.error(errorMessage);
-      }
-    } else {
-      try {
 
-        setIsSendingOtp(true);
-        await axios.post('/send-otp', { email: form.email });
-        setShowOtpInput(true);
-        setTimer(120);
-        toast.success('OTP sent to your email.');
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to send OTP.');
-      } finally {
-        setIsSendingOtp(false);
-      }
+    try {
+      setIsSendingOtp(true);
+      const response = await axios.post('/auth/register', {
+        name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        password: form.password
+      });
+      console.log('register response: ',response);
+      toast.success(response.data.message);
+      setShowOtpInput(true); 
+      setIsSendingOtp(false);
+      
+    } catch (error) {
+      setIsSendingOtp(false);
+      toast.error(error.response?.data?.error || 'Something went wrong');
+    }
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/auth/verify', {
+        email: form.email,
+        otp: form.otp
+      });
+      const token = response.data.token;
+      localStorage.setItem('authToken', token);
+      console.log('resopnse while verify: ', response);
+      toast.success(response.data.message);
+      navigate('/login');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Invalid OTP');
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      setIsSendingOtp(true);
+      await axios.post('/auth/register', {
+        email: form.email,
+        resend_otp: true
+      });
+      setOtpResent(true);
+      toast.success('OTP resent successfully');
+      setIsSendingOtp(false);
+      setTimer(30);
+      const countdown = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdown);  
+            setOtpResent(false); 
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+    } catch (error) {
+      setIsSendingOtp(false);
+      toast.error('Failed to resend OTP');
     }
   };
 
@@ -121,7 +120,8 @@ function Signup() {
         <div className="w-full max-w-md">
         <h1 className="text-4xl font-extrabold text-center text-[#4D4AC1] mb-8 righteous-regular">Guardial</h1>
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">Create an Account</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={showOtpInput ? handleOtpSubmit : handleSubmit} className="space-y-4">
+            {/* Full Name */}
             <div className="flex items-center bg-gray-100 rounded-md p-2">
               <FaUser className="text-gray-500 mr-3" />
               <input
@@ -134,6 +134,8 @@ function Signup() {
                 className="bg-transparent flex-1 outline-none"
               />
             </div>
+
+            {/* Email */}
             <div className="flex items-center bg-gray-100 rounded-md p-2">
               <FaEnvelope className="text-gray-500 mr-3" />
               <input
@@ -146,6 +148,8 @@ function Signup() {
                 className="bg-transparent flex-1 outline-none"
               />
             </div>
+
+            {/* Phone Number */}
             <div className="flex items-center bg-gray-100 rounded-md p-2">
               <FaPhone className="text-gray-500 mr-3" />
               <input
@@ -160,6 +164,8 @@ function Signup() {
                 className="bg-transparent flex-1 outline-none"
               />
             </div>
+
+            {/* Password */}
             <div className="flex items-center bg-gray-100 rounded-md p-2 relative">
               <FaLock className="text-gray-500 mr-3" />
               <input
@@ -178,19 +184,8 @@ function Signup() {
                 {showPassword ? <HiEye /> : <HiEyeOff />}
               </button>
             </div>
-            {/* Password Strength Meter */}
-            {form.password && (
-              <div className="mt-2">
-                <div className={`h-2 rounded ${passwordStrength >= 3 ? 'bg-green-500' : passwordStrength === 2 ? 'bg-yellow-400' : 'bg-red-500'}`} style={{ width: `${(passwordStrength + 1) * 20}%` }}></div>
-                {passwordSuggestions.length > 0 && (
-                  <ul className="mt-1 text-sm text-red-600">
-                    {passwordSuggestions.map((suggestion, index) => (
-                      <li key={index}>{suggestion}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+
+            {/* Confirm Password */}
             <div className="flex items-center bg-gray-100 rounded-md p-2 relative">
               <FaLock className="text-gray-500 mr-3" />
               <input
@@ -210,42 +205,48 @@ function Signup() {
               </button>
             </div>
 
+            {/* OTP Input */}
             {showOtpInput && (
-              <>
-                <div className="flex items-center bg-gray-100 rounded-md p-2">
-                  <FaKey className="text-gray-500 mr-3" />
-                  <input
-                    type="text"
-                    name="otp"
-                    value={form.otp}
-                    onChange={handleChange}
-                    placeholder="Enter OTP"
-                    required
-                    className="bg-transparent flex-1 outline-none"
-                  />
-                </div>
-                <div className="text-sm text-center mt-2">
-                  <p>{`Didn't receive the OTP?`}</p>
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={isSendingOtp || otpResent}
-                    className="text-blue-500 underline">
-                    {isSendingOtp ? 'Sending OTP...' : 'Resend OTP'}
-                  </button>
-                  {otpResent && timer > 0 && (
-                    <p className="mt-2">{`Resend available in ${timer}s`}</p>
-                  )}
-                </div>
-              </>
+              <div className="flex items-center bg-gray-100 rounded-md p-2">
+                <FaKey className="text-gray-500 mr-3" />
+                <input
+                  type="text"
+                  name="otp"
+                  value={form.otp}
+                  onChange={handleChange}
+                  placeholder="Enter OTP"
+                  required
+                  className="bg-transparent flex-1 outline-none"
+                />
+              </div>
             )}
 
+            {/* Resend OTP */}
+            {showOtpInput && (
+              <div className="text-sm text-center mt-2">
+                <p>{`Didn't receive the OTP?`}</p>
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={isSendingOtp || otpResent}
+                  className="text-blue-500 underline">
+                  {isSendingOtp ? 'Sending OTP...' : 'Resend OTP'}
+                </button>
+                {otpResent && timer > 0 && (
+                  <p className="mt-2">{`Resend available in ${timer}s`}</p>
+                )}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            
             <button
               type="submit"
               className="block w-full text-center py-3 rounded-md bg-[#6E6BDE] text-white font-medium hover:bg-[#4D4AC1] focus:outline-none focus:ring-2 focus:ring-[#4D4AC1] focus:ring-offset-2">
               {showOtpInput ? (isSendingOtp ? 'Sending...' : 'Verify OTP & Register') : (isSendingOtp ? 'Sending...' : 'Send OTP')}
             </button>
           </form>
+
           <p className="text-center text-gray-600 mt-4">
             Already have an account? <a href="/login" className="text-[#4D4AC1] font-bold hover:underline transition-300">Login here</a>
           </p>
