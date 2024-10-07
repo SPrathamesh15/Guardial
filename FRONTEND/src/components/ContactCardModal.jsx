@@ -34,7 +34,7 @@ const ContactCardModal = ({ contact }) => {
         name: contact.name,
         phone: contact.phone,
         isSpammer: contact.isSpammer || false,
-        spamLikelihood: contact.spamLikelyhood || 0,
+        spamLikelihood: contact.usersMarkedSpam || 0,
       });
       toast.success("Contact added successfully!");
       setIsConfirmAdd(false);
